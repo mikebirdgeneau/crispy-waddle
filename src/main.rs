@@ -11,7 +11,7 @@ pub mod schema;
 
 
 // This is the struct that represents the table in the database:
-#[derive(Queryable,Insertable,AsChangeset)]
+#[derive(Queryable,Insertable,AsChangeset,Debug)]
 #[diesel(table_name=schema::posts)]
 pub struct Post {
     pub id: i32,
@@ -73,14 +73,10 @@ fn main() {
         .on_conflict(id)
         .do_update()
         // ==== CAN THIS SECTION BE MORE DRY? ====
-        .set((
-            id.eq(excluded(id)),
-            title.eq(excluded(title)),
-            body.eq(excluded(body)),
-            published.eq(excluded(published)),
-        ))
+        .set(&post_set)
         // ======================================
-        .execute(connection).unwrap();
+        .execute(connection)
+        .unwrap();
 
     println!("{} rows affected", rows_affected);
     println!("");
