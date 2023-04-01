@@ -50,6 +50,23 @@ fn main() {
         published: false,
     });
 
+    // Now, we can do it like this, but with 100+ columns, this is not ideal:
+
+    use diesel::upsert::excluded;
+
+    diesel::insert_into(posts)
+        .values(&post_set)
+        .on_conflict(id)
+        .do_update()
+        .set((
+            id.eq(excluded(id)),
+            title.eq(excluded(title)),
+            body.eq(excluded(body)),
+            published.eq(excluded(published)),
+        ))
+        .execute(connection).unwrap();
+
+
     // Now, we want to perform an upsert with the new data in post_set, BUT
     // let's imagine a use_case where we have 1000s of rows, and 100+ columns
     // We don't want to have to specify all 100+ columns in the do_update() call
@@ -78,12 +95,13 @@ fn main() {
     //    ) = ROW (excluded.*)
     //    WHERE (t.id) IS DISTINCT FROM (excluded.*);
 
-    diesel::insert_into(posts)
-        .values(&post_set)
-        .on_conflict(id)
-        .do_update()
-        .set(&post_set) // <-- This is where I want to do a set() with all the columns...
-        .execute(connection)
-        .expect("Error saving new post");
+   //
+   // diesel::insert_into(posts)
+   //     .values(&post_set)
+   //     .on_conflict(id)
+   //     .do_update()
+   //     .set(&post_set) // <-- This is where I want to do a set() with all the columns...
+   //     .execute(connection)
+   //     .expect("Error saving new post");
 
 }
